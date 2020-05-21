@@ -1,4 +1,16 @@
 #![allow(non_snake_case)]
+#![allow(unused_variables)]
+#![allow(unused_assignments)]
+
+/*
+
+    Created by: Arnab Chanda
+    date: 21.05.20202
+
+    A simple implementation of hangman in rust
+
+*/
+
 
 use std::io::{stdin,stdout,Write};
 use std::char;
@@ -11,10 +23,13 @@ use std::{
     path::Path,
 };
 
+
+//file reader
 fn lines_from_file(filename: impl AsRef<Path>) -> io::Result<Vec<String>> {
     BufReader::new(File::open(filename)?).lines().collect()
 }
 
+//user input to take single characters
 fn get_user_input(s:&mut String) -> &mut String {
     let _=stdout().flush();
     stdin().read_line(s).expect("Did not enter a correct string");
@@ -24,12 +39,14 @@ fn get_user_input(s:&mut String) -> &mut String {
 }
 
 
+// A word struct ro represent a word
 struct Word{
     word: String,
     desc: String,
 }
 
 impl Word{
+    //constructor
     pub fn new(word: String, desc: String) -> Self {
         Self{
             word,
@@ -38,12 +55,15 @@ impl Word{
     }
 }
 
+
+//partial eq class for word
 impl PartialEq for Word {
     fn eq(&self, other: &Word) -> bool {
         self.word == other.word
     }
 }
 
+// struct to draw words from
 struct WordPool{
     words: Vec<Word>,
     index: usize,
@@ -51,7 +71,6 @@ struct WordPool{
 }
 
 impl WordPool{
-
     pub fn new() -> Self{
         Self{
             words   : vec![],
@@ -60,18 +79,19 @@ impl WordPool{
         }
     }
 
+    //add new word in pool
     pub fn add_word( &mut self, word: String, desc: String) {
         self.words.push(Word::new(word, desc));
         self.indexes.push(self.index);
         self.index+=1;
     }
 
+    //get new word from pool
     pub fn get_random_word(&mut self) -> (&Word,bool) {
         let default: usize = 999999999;
         let mut word_index = 0 as usize;
         let option = {
             let op = self.indexes.choose(&mut rand::thread_rng());
-            
             word_index = match op{
                 Some(number) => *number,
                 None => default,
@@ -92,16 +112,17 @@ impl WordPool{
         }
 
         let word = &self.words[word_index];
-
         return (word,end);
     }
 }
 
+// fuction to put spaces
 fn spacer() {
     println!();
     println!();
 }
 
+//funtion that prints wholesome patterns
 fn print_graphics(s: String){
     let patt1 = ".........................................................";
     spacer();
@@ -129,6 +150,7 @@ fn print_graphics(s: String){
     spacer();
 }
 
+//halp function for user
 fn help() {
     print_graphics(String::from("R U L E S"));
     println!("you will be given the length of a word and a short descri");
@@ -141,12 +163,10 @@ fn help() {
     spacer();
 }
 
+//function that populates word pool from file
 fn create_word_pool(wordPool: &mut WordPool) {
-
     let word = lines_from_file("words.in").expect("Could not load lines");
     let desc = lines_from_file("desc.in").expect("Could not load lines");
-    // let word = vec!["cat", "foobar"];
-    // let desc = vec!["A cute domestic animal", "a coding challenge"];
 
     for i in 0..word.len(){
         wordPool.add_word(word[i].to_string(), desc[i].to_string());
@@ -154,7 +174,8 @@ fn create_word_pool(wordPool: &mut WordPool) {
 }
 
 fn validate_input(s: & String) -> bool {
-    let x = &*s;
+
+    let x = &*s; //de referencing
 
     if x.len() == 0 {
         return false;
@@ -166,10 +187,12 @@ fn validate_input(s: & String) -> bool {
     if !x.chars().next().unwrap().is_alphabetic() {
         return false;
     }
+
     return true;
 }
 
 fn new_game(wordPool: &mut WordPool, high_score: &mut i32){
+
     println!("..............................................High score : {}", high_score);
     println!();
     println!("Ready to begin? haha you have no choice anyway!");
@@ -251,13 +274,14 @@ fn new_game(wordPool: &mut WordPool, high_score: &mut i32){
             }
 
             let inp_ch = s.chars().next().unwrap();
-            if !chars_inWord.contains(&inp_ch) {
+            if chars_selected.contains(&inp_ch) {
+                println!("You had aldready selected that character! Try Again!");
+            }
+            else if !chars_inWord.contains(&inp_ch) {
                 println!("Sorry thats not in the word! You lost a life!");
                 lives_left -= 1;
             }
-            else if chars_selected.contains(&inp_ch) {
-                println!("You had aldready selected that character! Try Again!");
-            }
+            
 
             chars_selected.insert(inp_ch);
             hangman_str = "".to_string();
@@ -288,15 +312,11 @@ fn new_game(wordPool: &mut WordPool, high_score: &mut i32){
 fn main() {
     
     print_graphics(String::from("H A N G M A N"));
-
     let mut high_score = 0;
     
-    loop {
-        
+    loop {        
         println!("Press 1 to start a new game and 2 to exit and 3 for the rules!");
-
         let mut s = String::new();
-        
         s = get_user_input(&mut s).to_string();
 
         match s {
@@ -311,5 +331,4 @@ fn main() {
         }
         
     }
-
 }
